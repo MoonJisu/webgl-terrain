@@ -1,5 +1,5 @@
 import { createProgram, vertexSrc, fragmentSrc } from './shaders.js';
-import { createTerrain } from './terrain.js';
+import { createTerrain, noiseHeights } from './terrain.js';
 import { perspective, multiply, normalize } from './mat4.js';
 import { createCamera } from './camera.js';
 
@@ -8,7 +8,8 @@ const gl = canvas.getContext('webgl2');
 if (!gl) throw new Error('이 브라우저는 WebGL2를 지원하지 않아요');
 
 const program = createProgram(gl, vertexSrc, fragmentSrc);
-const terrain = createTerrain(256, 1);
+const n = 257; // 한 변의 정점 수 (사각형 256개)
+const terrain = createTerrain(noiseHeights(n), n);
 
 // 정점 데이터 업로드: location 0 = 위치, 1 = 법선, 2 = 색
 const vao = gl.createVertexArray();

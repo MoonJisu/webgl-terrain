@@ -4,6 +4,7 @@ const perm = new Uint8Array(512);
 const F2 = 0.5 * (Math.sqrt(3) - 1);
 const G2 = (3 - Math.sqrt(3)) / 6;
 
+// 0~255 숫자를 섞어서 순열표 perm을 생성. 시드가 같으면 항상 같은 순열표가 생성됨 -> 같은 지형이 재현
 export function seed(s = 1) {
   s = s % 2147483647 || 1;
   const p = Array.from({ length: 256 }, (_, i) => i);
@@ -16,6 +17,8 @@ export function seed(s = 1) {
 }
 seed();
 
+// 2D Simplex 노이즈 계산
+// 공간을 삼각형 격자로 나누고 점이 속한 삼각형의 꼭짓점 3개를 찾아서 각 꼭짓점에서의 기여도를 합산
 export function noise2D(x, y) {
   const s = (x + y) * F2;
   const i = Math.floor(x + s), j = Math.floor(y + s);
@@ -40,6 +43,7 @@ export function noise2D(x, y) {
   );
 }
 
+// 노이즈를 6겹 쌓음. 겹마다 주파수는 2배, 진폭은 절반
 export function fbm(x, y, octaves = 6) {
   let sum = 0, amp = 1, freq = 1, norm = 0;
   for (let i = 0; i < octaves; i++) {

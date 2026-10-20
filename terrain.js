@@ -12,14 +12,18 @@ function colorAt(h) {
   return [0.95, 0.95, 0.97];              // 눈
 }
 
-export function createTerrain(size = 256, scale = 1) {
-  const n = size + 1; // 한 변의 정점 수
-  const half = (size * scale) / 2;
-
-  const heights = new Float32Array(n * n);
-  for (let z = 0; z < n; z++)
-    for (let x = 0; x < n; x++)
-      heights[z * n + x] = Math.max(0, fbm(x * FREQ, z * FREQ) * HEIGHT + LIFT); // 0 미만은 수면으로 평평하게
+export function noiseHeights(n) {
+    const heights = new Float32Array(n * n);
+    for (let z = 0; z < n; z++)
+      for (let x = 0; x < n; x++)
+        heights[z * n + x] = Math.max(0, fbm(x * FREQ, z * FREQ) * HEIGHT + LIFT); // 0 미만은 수면으로 평평하게
+    return heights;
+  }
+  
+  // heights: 길이 n*n의 높이 배열 (z * n + x 순서)
+  export function createTerrain(heights, n, scale = 1) {
+    const size = n - 1; // 한 변의 사각형 수
+    const half = (size * scale) / 2;
 
   const clamp = (v) => Math.min(n - 1, Math.max(0, v));
   const h = (x, z) => heights[clamp(z) * n + clamp(x)];
