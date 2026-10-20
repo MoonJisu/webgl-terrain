@@ -45,11 +45,30 @@ export function createMarkers(gl, positions, elevations) {
   const uViewProj = gl.getUniformLocation(program, 'uViewProj');
   const uWaterLevel = gl.getUniformLocation(program, 'uWaterLevel');
 
-  return function draw(viewProj, waterLevelMeters) {
+  function draw(viewProj, waterLevelMeters) {
     gl.useProgram(program);
     gl.uniformMatrix4fv(uViewProj, false, viewProj);
     gl.uniform1f(uWaterLevel, waterLevelMeters);
     gl.bindVertexArray(vao);
     gl.drawArrays(gl.POINTS, 0, elevations.length);
-  };
+  }
+
+  // 화면 좌표(x, y)에서 radius 픽셀 안의 가장 가까운 마커 번호, 없으면 -1
+  // shortcut: 산에 가려진 마커도 선택됨, 마커가 많아지면 깊이까지 비교
+  function pick(viewProj, x, y, width, height, radius = 15) {
+    const m = viewProj;
+    let best = -1, bestDist = radius;
+    for (let i = 0; i < elevations.length; i++) {
+      const [px, py, pz] = positions.subarray(i * 3, i * 3 + 3);
+      const w = m[3] * px + m[7] * py + m[11] * pz + m[15];
+      if (w <= 0) continue; // 카메라 뒤쪽
+      const sx = (((m[0] * px + m[4] * py + m[8] * pz + m[12]) / w) * 0.5 + 0.5) * width;
+      const sy = (0.5 - ((m[1] * px + m[5] * py + m[9] * pz + m[13]) / w) * 0.5) * height;
+      const d = Math.hypot(sx - x, sy - y);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+    return best;
+  }
+
+  return { draw, pick };
 }

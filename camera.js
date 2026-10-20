@@ -10,7 +10,6 @@ export function createCamera(canvas) {
 
   addEventListener('keydown', (e) => keys.add(e.code));
   addEventListener('keyup', (e) => keys.delete(e.code));
-  canvas.addEventListener('click', () => canvas.requestPointerLock());
   addEventListener('mousemove', (e) => {
     if (document.pointerLockElement !== canvas) return;
     yaw += e.movementX * 0.002;

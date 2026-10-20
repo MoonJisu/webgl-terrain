@@ -6,10 +6,15 @@
   <style>
     html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
     canvas { display: block; width: 100%; height: 100%; }
-    #panel {
-        position: fixed; left: 16px; bottom: 16px;
-        padding: 8px 12px; border-radius: 8px;
+    #panel, #stats, #popup {
+        position: fixed; padding: 8px 12px; border-radius: 8px;
         background: rgba(0, 0, 0, 0.6); color: #fff; font: 14px system-ui;
+    }
+    #panel { left: 16px; bottom: 16px; }
+    #stats { right: 16px; top: 16px; line-height: 1.6; }
+    #popup {
+        white-space: pre-line; pointer-events: none;
+        transform: translate(-50%, calc(-100% - 12px)); /* 클릭 지점 위에 표시 */
     }
     #panel input { display: block; width: 240px; }
   </style>
@@ -20,6 +25,12 @@
     <label for="level">수위 <output id="level-value">0.0m</output></label>
     <input id="level" type="range" min="-1" max="10" step="0.1" value="0">
   </div>
+  <div id="stats">
+    <div>침수 면적 <b id="stat-area">0.0</b> km²</div>
+    <div>침수 대피소 <b id="stat-flooded">0</b> / <span id="stat-total">0</span></div>
+    <div>위험 대피소 <b id="stat-warning">0</b></div>
+  </div>
+  <div id="popup" hidden></div>
   <script type="module" src="main.js"></script>
 </body>
 </html>
