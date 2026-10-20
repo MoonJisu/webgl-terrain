@@ -3,6 +3,7 @@ import { createTerrain, noiseHeights } from './terrain.js';
 import { loadTerrainTiles } from './geo/tiles.js';
 import { perspective, multiply, normalize } from './mat4.js';
 import { createCamera } from './camera.js';
+import { createMarkers } from './markers.js';
 
 const canvas = document.getElementById('c');
 const gl = canvas.getContext('webgl2');
@@ -10,9 +11,18 @@ if (!gl) throw new Error('이 브라우저는 WebGL2를 지원하지 않아요')
 
 const program = createProgram(gl, vertexSrc, fragmentSrc);
 const EXAGGERATION = 3; // 실제 지형은 너비에 비해 낮아서 높이를 과장
-const { heights, n, metersPerPixel } = await loadTerrainTiles(126.5292, 33.3617, 11); // 한라산
+const { heights, n, metersPerPixel, project } = await loadTerrainTiles(126.5292, 33.3617, 11); // 한라산
 for (let i = 0; i < heights.length; i++) heights[i] = (heights[i] / metersPerPixel) * EXAGGERATION;
 const terrain = createTerrain(heights, n);
+// 대피소: 위경도 → 메시 좌표, 지형 범위 밖은 제외
+const shelters = await (await fetch('data/shelters-jeju.json')).json();
+const placed = shelters
+  .map((s) => ({ ...s, ...project(s.lon, s.lat) }))
+  .filter((s) => s.px >= 0 && s.py >= 0 && s.px <= n - 1 && s.py <= n - 1);
+const markerPositions = new Float32Array(
+  placed.flatMap((s) => [s.x, heights[Math.round(s.py) * n + Math.round(s.px)] + 2, s.z]) // 지면보다 살짝 위
+);
+const drawMarkers = createMarkers(gl, markerPositions, new Float32Array(placed.map((s) => s.elevation)));
 
 // 정점 데이터 업로드: location 0 = 위치, 1 = 법선, 2 = 색
 const vao = gl.createVertexArray();
@@ -57,12 +67,16 @@ function frame(now) {
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.useProgram(program);
-  gl.uniformMatrix4fv(uViewProj, false, multiply(perspective(Math.PI / 3, w / h, 0.1, 2000), camera.viewMatrix()));
+  const viewProj = multiply(perspective(Math.PI / 3, w / h, 0.1, 2000), camera.viewMatrix());
+  const levelMeters = Number(levelInput.value);
+  gl.uniformMatrix4fv(uViewProj, false, viewProj);
   gl.uniform3fv(uLightDir, lightDir);
   // 미터 → 메시 단위 (높이와 같은 변환)
-  gl.uniform1f(uWaterLevel, (Number(levelInput.value) / metersPerPixel) * EXAGGERATION);
+  gl.uniform1f(uWaterLevel, (levelMeters / metersPerPixel) * EXAGGERATION);
   gl.bindVertexArray(vao);
   gl.drawElements(gl.TRIANGLES, terrain.indices.length, gl.UNSIGNED_INT, 0);
+
+  drawMarkers(viewProj, levelMeters);
 
   requestAnimationFrame(frame);
 }

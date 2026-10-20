@@ -3,15 +3,20 @@ const EARTH_CIRCUMFERENCE = 40075016.686; // 적도 둘레 (m)
 const tileUrl = (z, x, y) =>
   `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
 
-// 위경도 → 타일 번호 (Web Mercator)
-export function lonLatToTile(lon, lat, z) {
-  const n = 2 ** z;
-  const r = (lat * Math.PI) / 180;
-  return {
-    x: Math.floor(((lon + 180) / 360) * n),
-    y: Math.floor(((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n),
-  };
-}
+// 위경도 → 소수점 타일 좌표 (Web Mercator)
+function lonLatToWorld(lon, lat, z) {
+    const n = 2 ** z;
+    const r = (lat * Math.PI) / 180;
+    return {
+      x: ((lon + 180) / 360) * n,
+      y: ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * n,
+    };
+  }
+  
+  export function lonLatToTile(lon, lat, z) {
+    const w = lonLatToWorld(lon, lat, z);
+    return { x: Math.floor(w.x), y: Math.floor(w.y) };
+  }
 
 // 타일 PNG 한 장 → 높이 배열 (미터, 256×256)
 async function loadTile(z, x, y) {
@@ -51,5 +56,17 @@ export async function loadTerrainTiles(lon, lat, z) {
   await Promise.all(jobs); // 9장 동시에 요청
 
   const metersPerPixel = (EARTH_CIRCUMFERENCE * Math.cos((lat * Math.PI) / 180)) / (TILE * 2 ** z);
-  return { heights, n, metersPerPixel };
+
+  // 위경도 → 높이 배열 안의 픽셀 위치(px, py)와 메시 좌표(x, z)
+  const originX = (center.x - 1) * TILE; // 3×3 중 왼쪽 위 타일의 시작 픽셀
+  const originY = (center.y - 1) * TILE;
+  const half = (n - 1) / 2;              // terrain.js와 같은 중앙 정렬
+  const project = (lon, lat) => {
+    const w = lonLatToWorld(lon, lat, z);
+    const px = w.x * TILE - originX;
+    const py = w.y * TILE - originY;
+    return { px, py, x: px - half, z: py - half };
+  };
+
+  return { heights, n, metersPerPixel, project };
 }
