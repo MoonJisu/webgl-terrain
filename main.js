@@ -73,18 +73,18 @@ const camera = createCamera(canvas);
 
 let lastViewProj = null; // pick에서 쓰는 마지막 프레임의 행렬
 
-canvas.addEventListener('click', (e) => {
-  if (document.pointerLockElement === canvas) return; // 둘러보는 중에는 무시
-  const i = lastViewProj
-    ? markers.pick(lastViewProj, e.offsetX, e.offsetY, canvas.clientWidth, canvas.clientHeight)
-    : -1;
-  if (i < 0) {
-    // 빈 곳 클릭 → 팝업 닫고 둘러보기 시작
+// 회전을 시작하면 팝업이 마커와 어긋나므로 닫기
+canvas.addEventListener('pointerdown', () => {
     selected = null;
     popup.hidden = true;
-    canvas.requestPointerLock();
-    return;
-  }
+  });
+  
+  canvas.addEventListener('click', (e) => {
+    if (camera.dragged) return; // 드래그로 회전한 경우는 클릭이 아님
+    const i = lastViewProj
+      ? markers.pick(lastViewProj, e.offsetX, e.offsetY, canvas.clientWidth, canvas.clientHeight)
+      : -1;
+    if (i < 0) return;
   selected = placed[i];
   popup.style.left = `${e.clientX}px`;
   popup.style.top = `${e.clientY}px`;
