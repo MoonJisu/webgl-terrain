@@ -1,5 +1,6 @@
 import { createProgram, vertexSrc, fragmentSrc } from './shaders.js';
 import { createTerrain, noiseHeights } from './terrain.js';
+import { loadTerrainTiles } from './geo/tiles.js';
 import { perspective, multiply, normalize } from './mat4.js';
 import { createCamera } from './camera.js';
 
@@ -8,8 +9,10 @@ const gl = canvas.getContext('webgl2');
 if (!gl) throw new Error('이 브라우저는 WebGL2를 지원하지 않아요');
 
 const program = createProgram(gl, vertexSrc, fragmentSrc);
-const n = 257; // 한 변의 정점 수 (사각형 256개)
-const terrain = createTerrain(noiseHeights(n), n);
+const EXAGGERATION = 3; // 실제 지형은 너비에 비해 낮아서 높이를 과장
+const { heights, n, metersPerPixel } = await loadTerrainTiles(126.5292, 33.3617, 11); // 한라산
+for (let i = 0; i < heights.length; i++) heights[i] = (heights[i] / metersPerPixel) * EXAGGERATION;
+const terrain = createTerrain(heights, n);
 
 // 정점 데이터 업로드: location 0 = 위치, 1 = 법선, 2 = 색
 const vao = gl.createVertexArray();
