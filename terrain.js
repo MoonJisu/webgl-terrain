@@ -5,12 +5,12 @@ const FREQ = 0.01;   // 작을수록 지형이 넓게 펼쳐짐
 const LIFT = 10;     // 전체를 올려서 물 비율 줄이기
 
 function colorAt(h) {
-  if (h <= 0) return [0.15, 0.35, 0.6];   // 물
-  if (h < 2) return [0.76, 0.7, 0.5];     // 모래
-  if (h < 20) return [0.25, 0.5, 0.2];    // 풀
-  if (h < 32) return [0.45, 0.42, 0.4];   // 바위
-  return [0.95, 0.95, 0.97];              // 눈
-}
+    if (h <= 0) return [0.15, 0.35, 0.6];   // 물 (해수면 아래)
+    if (h < 0.5) return [0.76, 0.7, 0.5];   // 모래 (~10m)
+    if (h < 25) return [0.25, 0.5, 0.2];    // 풀 (~500m)
+    if (h < 70) return [0.45, 0.42, 0.4];   // 바위 (~1,450m)
+    return [0.95, 0.95, 0.97];              // 눈 (정상 부근)
+  }
 
 export function noiseHeights(n) {
     const heights = new Float32Array(n * n);

@@ -3,7 +3,7 @@ import { lookAt, cross, normalize } from './mat4.js';
 const UP = [0, 1, 0];
 
 export function createCamera(canvas) {
-  const position = [0, 60, 150];
+  const position = [0, 150, 500];
   let yaw = -Math.PI / 2; // -z 방향(지형 중앙)을 바라봄
   let pitch = -0.3;
   const keys = new Set();
