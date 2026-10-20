@@ -8,10 +8,12 @@ uniform mat4 uViewProj;
 
 out vec3 vNormal;
 out vec3 vColor;
+out float vHeight; 
 
 void main() {
   vNormal = aNormal;
   vColor = aColor;
+  vHeight = aPosition.y; 
   gl_Position = uViewProj * vec4(aPosition, 1.0);
 }`;
 
@@ -20,14 +22,26 @@ precision highp float;
 
 in vec3 vNormal;
 in vec3 vColor;
+in float vHeight;
 
-uniform vec3 uLightDir; // 표면에서 태양을 향하는 방향
+uniform vec3 uLightDir;
+uniform float uWaterLevel; // 메시 단위로 변환된 수위
 
 out vec4 outColor;
 
+const vec3 SEA = vec3(0.1, 0.3, 0.55);   // 원래 바다
+const vec3 FLOOD = vec3(0.3, 0.7, 0.95); // 새로 잠긴 땅
+
 void main() {
   float diffuse = max(dot(normalize(vNormal), uLightDir), 0.0);
-  outColor = vec4(vColor * (0.3 + 0.7 * diffuse), 1.0);
+  vec3 color = vColor * (0.3 + 0.7 * diffuse);
+
+  float depth = uWaterLevel - vHeight;
+  if (depth >= 0.0) {
+    vec3 water = vHeight <= 0.0 ? SEA : FLOOD; // 해발 0m 이하 = 원래 바다
+    color = mix(color, water, clamp(0.6 + depth * 0.05, 0.6, 0.95)); // 깊을수록 진하게
+  }
+  outColor = vec4(color, 1.0);
 }`;
 
 export function createProgram(gl, vsSrc, fsSrc) {

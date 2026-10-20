@@ -28,6 +28,12 @@ gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, terrain.indices, gl.STATIC_DRAW);
 
 const uViewProj = gl.getUniformLocation(program, 'uViewProj');
 const uLightDir = gl.getUniformLocation(program, 'uLightDir');
+const uWaterLevel = gl.getUniformLocation(program, 'uWaterLevel');
+const levelInput = document.getElementById('level');
+const levelOutput = document.getElementById('level-value');
+levelInput.addEventListener('input', () => {
+  levelOutput.textContent = `${Number(levelInput.value).toFixed(1)}m`;
+});
 const lightDir = normalize([0.5, 0.8, 0.3]);
 const camera = createCamera(canvas);
 
@@ -53,6 +59,8 @@ function frame(now) {
   gl.useProgram(program);
   gl.uniformMatrix4fv(uViewProj, false, multiply(perspective(Math.PI / 3, w / h, 0.1, 2000), camera.viewMatrix()));
   gl.uniform3fv(uLightDir, lightDir);
+  // 미터 → 메시 단위 (높이와 같은 변환)
+  gl.uniform1f(uWaterLevel, (Number(levelInput.value) / metersPerPixel) * EXAGGERATION);
   gl.bindVertexArray(vao);
   gl.drawElements(gl.TRIANGLES, terrain.indices.length, gl.UNSIGNED_INT, 0);
 
